@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.48 2015/01/29 15:55:21 manu Exp $	*/
+/*	$NetBSD: fts.c,v 1.52 2022/04/19 20:32:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,11 +33,12 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.48 2015/01/29 15:55:21 manu Exp $");
+__RCSID("$NetBSD: fts.c,v 1.52 2022/04/19 20:32:15 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "config.h"
+#include "reallocarr.h"
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -143,9 +144,8 @@ fts_open(char * const *argv, int options,
 	}
 
 	/* Allocate/initialize the stream */
-	if ((sp = malloc(sizeof(FTS))) == NULL)
+	if ((sp = calloc(1, sizeof(FTS))) == NULL)
 		return (NULL);
-	memset(sp, 0, sizeof(FTS));
 	sp->fts_compar = compar;
 	sp->fts_options = options;
 
@@ -1026,12 +1026,10 @@ fts_sort(FTS *sp, FTSENT *head, size_t nitems)
 	 * 40 so don't realloc one entry at a time.
 	 */
 	if (nitems > sp->fts_nitems) {
-		FTSENT **new;
-
-		new = realloc(sp->fts_array, sizeof(FTSENT *) * (nitems + 40));
-		if (new == 0)
-			return (head);
-		sp->fts_array = new;
+		errno = reallocarr(&sp->fts_array,
+		    nitems + 40, sizeof(*sp->fts_array));
+		if (errno)
+			return head;
 		sp->fts_nitems = fts_nitems_truncate(nitems + 40);
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
@@ -1190,7 +1188,7 @@ fts_padjust(FTS *sp, FTSENT *head)
 		(p)->fts_accpath =					\
 		    addr + ((p)->fts_accpath - (p)->fts_path);		\
 	(p)->fts_path = addr;						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 	addr = sp->fts_path;
 

@@ -62,13 +62,11 @@ configure_file(input : 'config.h.meson',
   output : 'config.h',
   configuration : cdata)
 
-inc = include_directories('.')
+inc = include_directories('include')
 
-install_headers('fts.h')
+fts_sources = ['src/fts.c', 'src/reallocarr.c']
 
-fts_sources = ['fts.c']
-
-ftslib = static_library(
+fts_lib = static_library(
   'fts',
   fts_sources,
   include_directories : inc,
@@ -77,10 +75,11 @@ ftslib = static_library(
 
 pkg_mod = import('pkgconfig')
 pkg_mod.generate(
-  libraries : ftslib,
+  libraries : fts_lib,
   name: 'musl-fts',
   filebase : 'musl-fts',
   description : 'Implementation of fts(3) functions for musl libc'
 )
 
-install_man('fts.3')
+install_headers('include/fts.h')
+install_man('man/fts.3')
