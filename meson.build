@@ -1,4 +1,4 @@
-project('fts', 'c', version : '1.2.7')
+project('fts', 'c', version : '1.2.8')
 
 cc = meson.get_compiler('c')
 cdata = configuration_data()
